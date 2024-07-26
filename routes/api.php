@@ -24,4 +24,6 @@ Route::controller(PostController::class)
     ->group(function () {
         Route::get('', 'index')->name('posts.index');
         Route::get('{post}', 'show')->name('posts.show');
+        Route::post('', 'store')->name('posts.store');
+        Route::post('{post}/comment', 'comment')->name('posts.add.comment');
     });

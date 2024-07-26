@@ -34,8 +34,9 @@ class Comment extends Model
 {
     use HasFactory;
 
+    //TODO: заменить 'user_id'
     protected $fillable = [
-        'post_id', 'text',
+        'post_id', 'text', 'user_id',
     ];
 
     public function post(): BelongsTo
