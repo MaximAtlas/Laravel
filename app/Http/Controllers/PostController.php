@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PostStatus;
+use App\Http\Requests\ApiRequest;
+use App\Http\Requests\PatchPostRequest;
+use App\Http\Requests\PutPostRequest;
+use App\Http\Requests\StorePostRequest;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
@@ -41,9 +45,9 @@ class PostController extends Controller
 
     }
 
-    public function store(Request $request): \Illuminate\Http\JsonResponse
+    public function store(StorePostRequest $request): \Illuminate\Http\JsonResponse
     {
-        $category = Category::query()->where('name', $request->str('category_name'))->first();
+        $category = $this->takeCategoryId($request);
 
         /*if (!$category) {
             return response()->json([
@@ -74,5 +78,65 @@ class PostController extends Controller
             'post_id' => $post->id,
             'text' => $request->str('text'),
         ])->only('id');
+    }
+
+    public function updatePut(Post $post, PutPostRequest $request)
+    {
+        $category = $this->takeCategoryId($request);
+
+        try {
+            $post->update([
+                'title' => $request->str('title'),
+                'body' => $request->input('content'),
+                'state' => $request->enum('state', PostStatus::class),
+                'category_id' => $category->id,
+            ]);
+
+            return response()->json(['success' => 'Пост успешно обновлён'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
+        }
+
+    }
+
+    public function updatePatch(Post $post, PatchPostRequest $request)
+    {
+        $category = $this->takeCategoryId($request);
+
+        // TODO: использовать DTO
+
+        try {
+            $data = [];
+
+            if ($request->has('title')) {
+                $data['title'] = $request->str('title');
+            }
+
+            if ($request->has('content')) {
+                $data['body'] = $request->input('content');
+            }
+
+            if ($request->has('state')) {
+                $data['state'] = $request->enum('state', PostStatus::class);
+            }
+
+            if (! empty($category)) {
+                $data['category_id'] = $category->id;
+            }
+
+            if (! empty($data)) {
+                $post->update($data);
+            }
+
+            return response()->json(['success' => 'Пост успешно обновлён'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
+        }
+
+    }
+
+    protected function takeCategoryId(ApiRequest $request)
+    {
+        return Category::query()->where('name', $request->str('category_name'))->first();
     }
 }

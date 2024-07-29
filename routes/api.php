@@ -26,4 +26,6 @@ Route::controller(PostController::class)
         Route::get('{post}', 'show')->name('posts.show');
         Route::post('', 'store')->name('posts.store');
         Route::post('{post}/comment', 'comment')->name('posts.add.comment');
+        Route::put('{post}', 'updatePut')->name('posts.put');
+        Route::patch('{post}', 'updatePatch')->name('posts.patch');
     });

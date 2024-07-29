@@ -5,15 +5,15 @@ namespace App\Http\Requests;
 use App\Enums\PostStatus;
 use Illuminate\Validation\Rules\Enum;
 
-class StorePostRequest extends ApiRequest
+class PatchPostRequest extends ApiRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-    public function authorize(): bool
-    {
-        return true;
-    }
+    /*    public function authorize(): bool
+        {
+            return false;
+        }*/
 
     /**
      * Get the validation rules that apply to the request.
@@ -23,11 +23,10 @@ class StorePostRequest extends ApiRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'max:150'],
+            'title' => ['nullable', 'string'],
             'content' => ['nullable'],
-            'image' => ['image', 'max:512'],
-            'state' => ['required', new Enum(PostStatus::class)],
-            'category_name' => ['required', 'exists:categories,name'],
+            'state' => ['nullable', new Enum(PostStatus::class)],
+            'category_name' => ['nullable', 'exists:categories,name'],
         ];
     }
 }
