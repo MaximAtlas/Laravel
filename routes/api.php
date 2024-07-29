@@ -28,4 +28,5 @@ Route::controller(PostController::class)
         Route::post('{post}/comment', 'comment')->name('posts.add.comment');
         Route::put('{post}', 'updatePut')->name('posts.put');
         Route::patch('{post}', 'updatePatch')->name('posts.patch');
+        Route::delete('{post}', 'delete')->name('posts.delete');
     });

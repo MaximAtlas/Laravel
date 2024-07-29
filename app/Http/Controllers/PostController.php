@@ -11,6 +11,7 @@ use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -45,7 +46,7 @@ class PostController extends Controller
 
     }
 
-    public function store(StorePostRequest $request): \Illuminate\Http\JsonResponse
+    public function store(StorePostRequest $request): JsonResponse
     {
         $category = $this->takeCategoryId($request);
 
@@ -80,7 +81,7 @@ class PostController extends Controller
         ])->only('id');
     }
 
-    public function updatePut(Post $post, PutPostRequest $request)
+    public function updatePut(Post $post, PutPostRequest $request): JsonResponse
     {
         $category = $this->takeCategoryId($request);
 
@@ -99,7 +100,7 @@ class PostController extends Controller
 
     }
 
-    public function updatePatch(Post $post, PatchPostRequest $request)
+    public function updatePatch(Post $post, PatchPostRequest $request): JsonResponse
     {
         $category = $this->takeCategoryId($request);
 
@@ -133,6 +134,13 @@ class PostController extends Controller
             return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
         }
 
+    }
+
+    public function delete(Post $post, PatchPostRequest $request): JsonResponse
+    {
+        $post->delete();
+
+        return response()->json(['success' => 'Пост успешно удален'], 200);
     }
 
     protected function takeCategoryId(ApiRequest $request)
