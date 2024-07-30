@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
     return $request->user();
 });*/
 
+//Route::apiResource('posts', PostController::class);
+
 Route::controller(PostController::class)
     ->prefix('posts')
     ->group(function () {
@@ -26,7 +28,7 @@ Route::controller(PostController::class)
         Route::get('{post}', 'show')->name('posts.show');
         Route::post('', 'store')->name('posts.store');
         Route::post('{post}/comment', 'comment')->name('posts.add.comment');
-        Route::put('{post}', 'updatePut')->name('posts.put');
-        Route::patch('{post}', 'updatePatch')->name('posts.patch');
-        Route::delete('{post}', 'delete')->name('posts.delete');
+        Route::put('{post}', 'update')->name('posts.put');
+        Route::patch('{post}', 'update')->name('posts.patch');
+        Route::delete('{post}', 'destroy')->name('posts.destroy');
     });

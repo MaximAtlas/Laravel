@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Enums\PostStatus;
 use App\Http\Requests\ApiRequest;
-use App\Http\Requests\PatchPostRequest;
 use App\Http\Requests\PutPostRequest;
 use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
@@ -14,6 +14,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
@@ -23,38 +24,25 @@ class PostController extends Controller
         auth()->login(User::query()->where(['role' => 'admin'])->inRandomOrder()->first());
     }
 
+    /**
+     * Display a listing of the resource.
+     */
     public function index(): array
     {
         return Post::query()->select('title', 'thumbnail', 'views', 'created_at')->get()->toArray();
     }
 
-    public function show(Post $post): array
-    {
+    /**
+     * Show the form for creating a new resource.
+     */
 
-        return [
-            'title' => $post->title,
-            'body' => $post->body,
-            'views' => $post->views,
-            'authorName' => $post->user->name,
-            'createdAt' => $post->created_at,
-            'categoryName' => $post->category->name,
-            'comments' => $post->comments->map(fn (Comment $comment) => [
-                'username' => $comment->user->name,
-                'text' => $comment->text,
-            ]),
-        ];
-
-    }
-
+    /**
+     * Store a newly created resource in storage.
+     */
     public function store(StorePostRequest $request): JsonResponse
     {
-        $category = $this->takeCategoryId($request);
 
-        /*if (!$category) {
-            return response()->json([
-                'error' => 'Категория не найдена',
-            ], 404);
-        }*/
+        $category = $this->takeCategoryId($request);
 
         $path = $request->file('image')->storePublicly('images');
 
@@ -72,19 +60,53 @@ class PostController extends Controller
         ], 201);
     }
 
-    public function comment(Post $post, Request $request): array
+    /**
+     * Display the specified resource.
+     */
+    public function show(Post $post)
     {
-        return $post->comments()->create([
-            'user_id' => auth()->id(),
-            'post_id' => $post->id,
-            'text' => $request->str('text'),
-        ])->only('id');
+        return [
+            'title' => $post->title,
+            'body' => $post->body,
+            'views' => $post->views,
+            'authorName' => $post->user->name,
+            'createdAt' => $post->created_at,
+            'categoryName' => $post->category->name,
+            'comments' => $post->comments->map(fn (Comment $comment) => [
+                'username' => $comment->user->name,
+                'text' => $comment->text,
+            ]),
+        ];
     }
 
-    public function updatePut(Post $post, PutPostRequest $request): JsonResponse
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Post $post, UpdatePostRequest $updateRequest): JsonResponse
     {
-        $category = $this->takeCategoryId($request);
+        $category = $this->takeCategoryId($updateRequest);
 
+        $BoolPutRequest = $updateRequest->isMethod('put') ?? false;
+
+        if ($BoolPutRequest) {
+
+            $putRequest = new PutPostRequest();
+            $putRequest->merge($updateRequest->all());
+            $validator = Validator::make($putRequest->all(), $putRequest->rules());
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            return $this->handlePutUpdate($post, $updateRequest, $category);
+        } else {
+            return $this->handlePatchUpdate($post, $updateRequest, $category);
+        }
+
+    }
+
+    private function handlePutUpdate(Post $post, ApiRequest $request, Category $category): JsonResponse
+    {
         try {
             $post->update([
                 'title' => $request->str('title'),
@@ -97,15 +119,11 @@ class PostController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
         }
-
     }
 
-    public function updatePatch(Post $post, PatchPostRequest $request): JsonResponse
+    private function handlePatchUpdate(Post $post, ApiRequest $request, ?Category $category): JsonResponse
     {
-        $category = $this->takeCategoryId($request);
-
         // TODO: использовать DTO
-
         try {
             $data = [];
 
@@ -127,20 +145,42 @@ class PostController extends Controller
 
             if (! empty($data)) {
                 $post->update($data);
+            } else {
+                return response()->json(['No Content' => 'Нет данных для обновления'], 204);
             }
 
             return response()->json(['success' => 'Пост успешно обновлён'], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
         }
-
     }
 
-    public function delete(Post $post, PatchPostRequest $request): JsonResponse
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Post $post): JsonResponse
     {
-        $post->delete();
+        try {
 
-        return response()->json(['success' => 'Пост успешно удален'], 200);
+            $post->delete();
+
+            return response()->json(['success' => 'Пост успешно удален'], 200);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Ошибка удаления поста: '.$e->getMessage()], 406);
+        }
+    }
+
+    public function comment(Post $post, Request $request): array
+    {
+
+        // TODO: сделать валидацию данных коментария
+
+        return $post->comments()->create([
+            'user_id' => auth()->id(),
+            'post_id' => $post->id,
+            'text' => $request->str('text'),
+        ])->only('id');
     }
 
     protected function takeCategoryId(ApiRequest $request)
