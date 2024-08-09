@@ -3,14 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Enums\PostStatus;
-use App\Http\Requests\ApiRequest;
-use App\Http\Requests\PutPostRequest;
-use App\Http\Requests\StorePostRequest;
-use App\Http\Requests\UpdatePostRequest;
+use App\Http\Requests\Post\ApiRequest;
+use App\Http\Requests\Post\PutPostRequest;
+use App\Http\Requests\Post\StorePostRequest;
+use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -20,8 +19,7 @@ class PostController extends Controller
 {
     public function __construct()
     {
-        // TODO: убрать, когда мы будем работать с авторизацией
-        auth()->login(User::query()->where(['role' => 'admin'])->inRandomOrder()->first());
+        $this->middleware('auth')->only(['store', 'update', 'review', 'destroy']);
     }
 
     /**
@@ -148,6 +146,8 @@ class PostController extends Controller
             } else {
                 return response()->json(['No Content' => 'Нет данных для обновления'], 204);
             }
+
+            dump(auth()->user());
 
             return response()->json(['success' => 'Пост успешно обновлён'], 200);
         } catch (\Exception $e) {

@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Post;
 
 use App\Enums\PostStatus;
 use Illuminate\Validation\Rules\Enum;
 
-class PutPostRequest extends ApiRequest
+class StorePostRequest extends ApiRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
-    /*    public function authorize(): bool
-        {
-            return false;
-        }*/
+    public function authorize(): bool         //Класс отвечающий за проверку прав
+    {
+        return true;
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -23,8 +23,9 @@ class PutPostRequest extends ApiRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string'],
+            'title' => ['required', 'max:150'],
             'content' => ['nullable'],
+            'image' => ['image', 'max:512'],
             'state' => ['required', new Enum(PostStatus::class)],
             'category_name' => ['required', 'exists:categories,name'],
         ];
