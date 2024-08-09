@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\User\LoginRequest;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -21,11 +20,11 @@ class UserController extends Controller
         }
 
         $user = Auth::guard('web')->user();
-        $token = Str::random(60);
 
-        $user->update(['api_token' => $token]);
+        $token = $user->createToken('login');
+        //dd($user->update(['api_token' => $token]));
 
-        return ['token' => $token];
+        return ['token' => $token->plainTextToken];
 
     }
 }

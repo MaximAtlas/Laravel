@@ -19,7 +19,7 @@ class PostController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('auth')->only(['store', 'update', 'review', 'destroy']);
+
     }
 
     /**
@@ -146,8 +146,6 @@ class PostController extends Controller
             } else {
                 return response()->json(['No Content' => 'Нет данных для обновления'], 204);
             }
-
-            dump(auth()->user());
 
             return response()->json(['success' => 'Пост успешно обновлён'], 200);
         } catch (\Exception $e) {

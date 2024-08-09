@@ -27,11 +27,14 @@ Route::controller(PostController::class)
     ->group(function () {
         Route::get('', 'index')->name('posts.index');
         Route::get('{post}', 'show')->name('posts.show');
-        Route::post('', 'store')->name('posts.store');
-        Route::post('{post}/comment', 'comment')->name('posts.add.comment');
-        Route::put('{post}', 'update')->name('posts.put');
-        Route::patch('{post}', 'update')->name('posts.patch');
-        Route::delete('{post}', 'destroy')->name('posts.destroy');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::post('', 'store')->name('posts.store');
+            Route::post('{post}/comment', 'comment')->name('posts.add.comment');
+            Route::put('{post}', 'update')->name('posts.put');
+            Route::patch('{post}', 'update')->name('posts.patch');
+            Route::delete('{post}', 'destroy')->name('posts.destroy');
+        });
     });
 
 Route::controller(UserController::class)->group(function () {

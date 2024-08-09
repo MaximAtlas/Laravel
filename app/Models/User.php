@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
+use Barryvdh\LaravelIdeHelper\Eloquent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -41,7 +42,13 @@ use Laravel\Sanctum\HasApiTokens;
  * @method static \Illuminate\Database\Eloquent\Builder|User whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder|User whereUpdatedAt($value)
  *
- * @mixin \Eloquent
+ * @property string|null $api_token
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Post> $posts
+ * @property-read int|null $posts_count
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|User whereApiToken($value)
+ *
+ * @mixin Eloquent
  */
 class User extends Authenticatable
 {
@@ -57,7 +64,6 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'api_token',
     ];
 
     /**
@@ -68,7 +74,6 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
-        'api_token',
     ];
 
     /**
