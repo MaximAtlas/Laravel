@@ -19,12 +19,16 @@ class UserController extends Controller
 
         }
 
-        $user = Auth::guard('web')->user();
+        $user = Auth::guard('api')->user();
+        $user->tokens()->delete();
 
-        $token = $user->createToken('login');
+        $token = $user->createToken('auth_token')->plainTextToken;
         //dd($user->update(['api_token' => $token]));
 
-        return ['token' => $token->plainTextToken];
+        return response()->json([
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+        ]);
 
     }
 }

@@ -42,16 +42,19 @@ class PostController extends Controller
 
         $category = $this->takeCategoryId($request);
 
-        $path = $request->file('image')->storePublicly('images');
-
         /** @var Post $post */
         $post = auth()->user()->posts()->create([
             'title' => $request->str('title'),
             'body' => $request->str('content'),
-            'thumbnail' => config('app.url').Storage::url($path),
+            //'thumbnail' => config('app.url').Storage::url($path),
             'status' => $request->enum('state', PostStatus::class),
             'category_id' => $category->id,
         ]);
+
+        if ($request->hasFile('image') && $request->file('image')->isValid()) {
+            $path = $request->file('image')->storePublicly('images');
+            $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
+        }
 
         return response()->json([
             'id' => $post->id,
