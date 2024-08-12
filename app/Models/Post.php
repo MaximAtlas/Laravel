@@ -76,4 +76,9 @@ class Post extends Model
     {
         return $this->hasMany(Comment::class);
     }
+
+    public function isDraft(): bool
+    {
+        return $this->status === PostStatus::Draft;
+    }
 }
