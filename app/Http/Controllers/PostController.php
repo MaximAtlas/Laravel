@@ -2,72 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\PostStatus;
-use App\Http\Requests\Post\ApiRequest;
-use App\Http\Requests\Post\PutPostRequest;
 use App\Http\Requests\Post\StorePostRequest;
 use App\Http\Requests\Post\UpdatePostRequest;
 use App\Http\Resources\MinifiedPostResource;
+use App\Http\Resources\PostCommentResource;
 use App\Http\Resources\PostResource;
-use App\Models\Category;
 use App\Models\Post;
+use App\Services\Post\PostService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    public function __construct()
-    {
-
-    }
-
     /**
      * Display a listing of the resource.
      */
-    public function index(): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
+    public function index(PostService $post): AnonymousResourceCollection
     {
-        $post = Post::query()->select('title', 'thumbnail', 'views', 'created_at')->whereStatus(PostStatus::Published)->get();
-
-        return MinifiedPostResource::collection($post);
+        return MinifiedPostResource::collection($post->getPublished());
     }
-
-    /**
-     * Show the form for creating a new resource.
-     */
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StorePostRequest $request): JsonResponse
+    public function store(StorePostRequest $request, PostService $postService): PostResource
     {
 
-        $category = $this->takeCategoryId($request);
+        $category = $postService->takeCategoryId($request);
 
-        /** @var Post $post */
-        $post = auth()->user()->posts()->create([
-            'title' => $request->str('title'),
-            'body' => $request->str('content'),
-            //'thumbnail' => config('app.url').Storage::url($path),
-            'status' => $request->enum('state', PostStatus::class),
-            'category_id' => $category->id,
-        ]);
+        $post = $postService->addPost($request, $category);
 
-        if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $path = $request->file('image')->storePublicly('images');
-            $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
-        }
+        return new PostResource($post);
 
-        return response()->json([
-            'id' => $post->id,
-        ], 201);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(Post $post)
+    public function show(Post $post): PostResource
     {
         return new PostResource($post);
     }
@@ -75,77 +49,20 @@ class PostController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Post $post, UpdatePostRequest $updateRequest): JsonResponse
+    public function update(Post $post, UpdatePostRequest $updateRequest, PostService $postService): JsonResponse
     {
-        $category = $this->takeCategoryId($updateRequest);
+        $postService->setPost($post);
 
         $BoolPutRequest = $updateRequest->isMethod('put') ?? false;
 
         if ($BoolPutRequest) {
 
-            $putRequest = new PutPostRequest();
-            $putRequest->merge($updateRequest->all());
-            $validator = Validator::make($putRequest->all(), $putRequest->rules());
+            return $postService->putValidationToUpdatePost($updateRequest);
 
-            if ($validator->fails()) {
-                return response()->json(['errors' => $validator->errors()], 422);
-            }
-
-            return $this->handlePutUpdate($post, $updateRequest, $category);
         } else {
-            return $this->handlePatchUpdate($post, $updateRequest, $category);
+            return $postService->PatchUpdatePost($updateRequest);
         }
 
-    }
-
-    private function handlePutUpdate(Post $post, ApiRequest $request, Category $category): JsonResponse
-    {
-        try {
-            $post->update([
-                'title' => $request->str('title'),
-                'body' => $request->input('content'),
-                'state' => $request->enum('state', PostStatus::class),
-                'category_id' => $category->id,
-            ]);
-
-            return response()->json(['success' => 'Пост успешно обновлён'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
-        }
-    }
-
-    private function handlePatchUpdate(Post $post, ApiRequest $request, ?Category $category): JsonResponse
-    {
-        // TODO: использовать DTO
-        try {
-            $data = [];
-
-            if ($request->has('title')) {
-                $data['title'] = $request->str('title');
-            }
-
-            if ($request->has('content')) {
-                $data['body'] = $request->input('content');
-            }
-
-            if ($request->has('state')) {
-                $data['state'] = $request->enum('state', PostStatus::class);
-            }
-
-            if (! empty($category)) {
-                $data['category_id'] = $category->id;
-            }
-
-            if (! empty($data)) {
-                $post->update($data);
-            } else {
-                return response()->json(['No Content' => 'Нет данных для обновления'], 204);
-            }
-
-            return response()->json(['success' => 'Пост успешно обновлён'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Ошибка обновления поста: '.$e->getMessage()], 500);
-        }
     }
 
     /**
@@ -157,27 +74,18 @@ class PostController extends Controller
 
             $post->delete();
 
-            return response()->json(['success' => 'Пост успешно удален'], 200);
+            return responseSuccess('Пост успешно удален');
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Ошибка удаления поста: '.$e->getMessage()], 406);
+            return responseFail($e, 'Ошибка удаления поста', 406);
         }
     }
 
-    public function comment(Post $post, Request $request): array
+    public function comment(Post $post, Request $request, PostService $postService): PostCommentResource
     {
-
         // TODO: сделать валидацию данных коментария
+        $comment = $postService->setPost($post)->comment($request);
 
-        return $post->comments()->create([
-            'user_id' => auth()->id(),
-            'post_id' => $post->id,
-            'text' => $request->str('text'),
-        ])->only('id');
-    }
-
-    protected function takeCategoryId(ApiRequest $request)
-    {
-        return Category::query()->where('name', $request->str('category_name'))->first();
+        return new PostCommentResource($comment);
     }
 }

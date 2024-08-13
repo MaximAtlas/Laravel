@@ -18,7 +18,8 @@ class MinifiedPostResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return ['title' => $this->title,
+        return ['id' => $this->id,
+            'title' => $this->title,
             'thumbnail' => $this->thumbnail,
             'views' => $this->views,
             'created_at' => $this->created_at];
