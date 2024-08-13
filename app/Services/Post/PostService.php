@@ -31,23 +31,29 @@ class PostService
         return Post::query()->select($fields)->whereStatus(PostStatus::Published)->get();
     }
 
-    public function addPost($request, $category): Post
+    public function addPost($request): JsonResponse
     {
-        /** @var Post $post */
-        $post = auth()->user()->posts()->create([
-            'title' => $request->str('title'),
-            'body' => $request->str('content'),
-            //'thumbnail' => config('app.url').Storage::url($path),
-            'status' => $request->enum('state', PostStatus::class),
-            'category_id' => $category->id,
-        ]);
+        try {
+            $category = $this->takeCategoryId($request);
 
-        if ($request->hasFile('image') && $request->file('image')->isValid()) {
-            $path = $request->file('image')->storePublicly('images');
-            $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
+            /** @var Post $post */
+            $post = auth()->user()->posts()->create([
+                'title' => $request->str('title'),
+                'body' => $request->str('content'),
+                //'thumbnail' => config('app.url').Storage::url($path),
+                'status' => $request->enum('state', PostStatus::class),
+                'category_id' => $category->id,
+            ]);
+
+            if ($request->hasFile('image') && $request->file('image')->isValid()) {
+                $path = $request->file('image')->storePublicly('images');
+                $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
+            }
+
+            return responseSuccess('Пост успешно добавлен');
+        } catch (\Exception $e) {
+            return responseFail($e, 'Ошибка добавления поста', 500);
         }
-
-        return $post;
     }
 
     public function putValidationToUpdatePost($updateRequest): JsonResponse
