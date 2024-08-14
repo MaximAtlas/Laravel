@@ -9,6 +9,7 @@ use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Services\Post\DTO\CreatePostData;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -31,22 +32,18 @@ class PostService
         return Post::query()->select($fields)->whereStatus(PostStatus::Published)->get();
     }
 
-    public function addPost($request): JsonResponse
+    public function addPost(CreatePostData $data): JsonResponse
     {
         try {
-            $category = $this->takeCategoryId($request);
-
             /** @var Post $post */
-            $post = auth()->user()->posts()->create([
-                'title' => $request->str('title'),
-                'body' => $request->str('content'),
-                //'thumbnail' => config('app.url').Storage::url($path),
-                'status' => $request->enum('state', PostStatus::class),
-                'category_id' => $category->id,
-            ]);
+            $post = auth()->user()->posts()->create(
+                $data->except('image')->toArray()
+            );
 
-            if ($request->hasFile('image') && $request->file('image')->isValid()) {
-                $path = $request->file('image')->storePublicly('images');
+            $image = $data->only('image')->toArray();
+
+            if (! empty($image)) {
+                $path = $image['image']->storePublicly('images');
                 $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
             }
 

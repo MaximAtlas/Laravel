@@ -11,17 +11,16 @@ return new class extends Migration
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('category_id')
-                ->nullable()
                 ->constrained()
                 ->nullOnDelete();
             $table->foreignId('user_id')
                 ->nullable()
                 ->constrained()
                 ->cascadeOnDelete();
-            $table->string('title')->nullable();
+            $table->string('title');
             $table->text('body')->nullable();
             $table->string('thumbnail')->nullable();
-            $table->string('status')->nullable();
+            $table->string('status');
             $table->integer('views')->nullable()->default(0);
             $table->timestamps();
         });

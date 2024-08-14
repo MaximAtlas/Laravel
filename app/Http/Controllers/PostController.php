@@ -30,7 +30,7 @@ class PostController extends Controller
     public function store(StorePostRequest $request): JsonResponse
     {
 
-        return PostFacade::addPost($request);
+        return PostFacade::addPost($request->data($request));
 
     }
 
