@@ -56,7 +56,7 @@ class PostController extends Controller
             return PostFacade::putValidationToUpdatePost($updateRequest);
 
         } else {
-            return PostFacade::PatchUpdatePost($updateRequest);
+            return PostFacade::PatchUpdatePost($updateRequest->data($updateRequest));
         }
 
     }

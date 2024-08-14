@@ -36,12 +36,11 @@ class StorePostRequest extends ApiRequest
     public function data(StorePostRequest $request)
     {
 
-        $categoryId = Post::takeCategoryId($request);
-
-        $data = $this->validated();
-
-        $data['category_id'] = $categoryId->id;
-        unset($data['category_name']);
+        if (! empty($data['category_name'])) {
+            $categoryId = Post::takeCategoryId($request);
+            $data['category_id'] = $categoryId->id;
+            unset($data['category_name']);
+        }
 
         return CreatePostData::from($data);
     }

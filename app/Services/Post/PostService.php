@@ -5,11 +5,11 @@ namespace App\Services\Post;
 use App\Enums\PostStatus;
 use App\Http\Requests\Post\ApiRequest;
 use App\Http\Requests\Post\PutPostRequest;
-use App\Http\Requests\Post\UpdatePostRequest;
 use App\Models\Category;
 use App\Models\Comment;
 use App\Models\Post;
 use App\Services\Post\DTO\CreatePostData;
+use App\Services\Post\DTO\UpdatePostData;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
@@ -63,22 +63,26 @@ class PostService
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        return $this->handlePutUpdate($putRequest);
+        $data = $putRequest->data($putRequest);
+
+        return $this->handlePutUpdate($data);
     }
 
-    private function handlePutUpdate(PutPostRequest $request): JsonResponse
+    private function handlePutUpdate(UpdatePostData $data): JsonResponse
     {
-        //TODO:: Проверить типизацию класса валидации для $request
 
-        $category = $this->takeCategoryId($request);
+        $fillFields = (array_keys(get_object_vars($data)));
+
+        $updateData = $data->toArray();
 
         try {
-            $this->post->update([
-                'title' => $request->str('title'),
-                'body' => $request->input('content'),
-                'state' => $request->enum('state', PostStatus::class),
-                'category_id' => $category->id,
-            ]);
+            foreach ($fillFields as $field) {
+                if (! array_key_exists($field, $updateData)) {
+                    $updateData[$field] = null;
+                }
+            }
+
+            $this->post->update($updateData);
 
             return responseSuccess('Пост успешно обновлён');
         } catch (\Exception $e) {
@@ -86,31 +90,11 @@ class PostService
         }
     }
 
-    public function PatchUpdatePost(UpdatePostRequest $request): JsonResponse
+    public function PatchUpdatePost(UpdatePostData $data): JsonResponse
     {
-        // TODO: использовать DTO
         try {
-            $data = [];
-
-            if ($request->has('title')) {
-                $data['title'] = $request->str('title');
-            }
-
-            if ($request->has('content')) {
-                $data['body'] = $request->input('content');
-            }
-
-            if ($request->has('state')) {
-                $data['state'] = $request->enum('state', PostStatus::class);
-            }
-
-            if (! empty($category)) {
-                $category = $this->takeCategoryId($request);
-                $data['category_id'] = $category->id;
-            }
-
-            if (! empty($data)) {
-                $this->post->update($data);
+            if (! empty($data->toArray())) {
+                $this->post->update($data->toArray());
             } else {
                 return response()->json(['No Content' => 'Нет данных для обновления'], 204);
             }

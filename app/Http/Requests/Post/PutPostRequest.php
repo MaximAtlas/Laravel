@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Post;
 
 use App\Enums\PostStatus;
+use App\Facades\Post;
+use App\Services\Post\DTO\UpdatePostData;
 use Illuminate\Validation\Rules\Enum;
 
 class PutPostRequest extends ApiRequest
@@ -28,5 +30,19 @@ class PutPostRequest extends ApiRequest
             'state' => ['required', new Enum(PostStatus::class)],
             'category_name' => ['required', 'exists:categories,name'],
         ];
+    }
+
+    public function data(PutPostRequest $request): UpdatePostData
+    {
+
+        $data = $request->toArray();
+
+        if (! empty($data['category_name'])) {
+            $categoryId = Post::takeCategoryId($request);
+            $data['category_id'] = $categoryId->id;
+            unset($data['category_name']);
+        }
+
+        return UpdatePostData::from($data);
     }
 }
