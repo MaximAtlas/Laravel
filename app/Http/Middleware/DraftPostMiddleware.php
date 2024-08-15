@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\Post\PostNotFoundException;
 use App\Models\Post;
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class DraftPostMiddleware
 {
@@ -14,7 +14,7 @@ class DraftPostMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next)
     {
         /***
          * @var $post POST
@@ -22,9 +22,7 @@ class DraftPostMiddleware
         $post = ($request->route('post'));
 
         if ($post->isDraft()) {
-            return response()->json([
-                'message' => 'DraftPost',
-            ], 403);
+            throw new PostNotFoundException();
         }
 
         return $next($request);

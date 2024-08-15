@@ -36,6 +36,7 @@ class StorePostRequest extends ApiRequest
     public function data(StorePostRequest $request)
     {
 
+        $data = $request->toArray();
         if (! empty($data['category_name'])) {
             $categoryId = Post::takeCategoryId($request);
             $data['category_id'] = $categoryId->id;

@@ -47,7 +47,7 @@ class PostService
                 $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
             }
 
-            return responseSuccess('Пост успешно добавлен');
+            return responseOk('Пост успешно добавлен');
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка добавления поста', 500);
         }
@@ -84,7 +84,7 @@ class PostService
 
             $this->post->update($updateData);
 
-            return responseSuccess('Пост успешно обновлён');
+            return responseOk('Пост успешно обновлён');
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка обновления поста', 500);
         }
@@ -99,7 +99,7 @@ class PostService
                 return response()->json(['No Content' => 'Нет данных для обновления'], 204);
             }
 
-            return responseSuccess('Пост успешно обновлён');
+            return responseOk('Пост успешно обновлён');
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка обновления поста', 500);
         }

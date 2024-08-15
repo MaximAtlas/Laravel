@@ -70,7 +70,7 @@ class PostController extends Controller
 
             $post->delete();
 
-            return responseSuccess('Пост успешно удален');
+            return responseOk('Пост успешно удален');
 
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка удаления поста', 406);

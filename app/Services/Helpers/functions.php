@@ -2,7 +2,7 @@
 
 use Illuminate\Http\JsonResponse;
 
-function responseSuccess(string $text = 'Операция выполнена успешно', int $code = 200): JsonResponse
+function responseOk(string $text = 'Операция выполнена успешно', int $code = 200): JsonResponse
 {
     return response()->json([
         'message' => "success: $text",
@@ -21,4 +21,8 @@ function responseSuccessWithId($model, string $text = 'Операция выпо
 function responseFail(Exception $e, string $text = 'Ошибка выполнения', int $code = 200): JsonResponse
 {
     return response()->json(['error' => "$text: ".$e->getMessage()], $code);
+}
+function responseSimpleFail(string $text = 'Ошибка выполнения', int $code = 400): JsonResponse
+{
+    return response()->json(['error' => "$text"], $code);
 }
