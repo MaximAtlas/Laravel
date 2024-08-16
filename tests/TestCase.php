@@ -2,9 +2,26 @@
 
 namespace Tests;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Laravel\Sanctum\Sanctum;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
+
+    protected User $currentUser;
+
+    protected function signIn(string $isAdmin = 'admin'): void
+    {
+        $this->currentUser = User::factory()
+            ->createOne(['role' => 'admin']);
+
+        Sanctum::actingAs($this->currentUser);
+    }
+
+    protected function currentUserId(): int
+    {
+        return $this->currentUser->id;
+    }
 }

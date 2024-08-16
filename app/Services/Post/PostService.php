@@ -47,7 +47,7 @@ class PostService
                 $post->update(['thumbnail' => config('app.url').Storage::url($path)]);
             }
 
-            return responseOk('Пост успешно добавлен');
+            return responseOk('Пост успешно добавлен c id:'."$post->id", 201);
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка добавления поста', 500);
         }
