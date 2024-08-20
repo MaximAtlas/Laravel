@@ -73,6 +73,7 @@ class PostService
 
         $fillFields = (array_keys(get_object_vars($data)));
 
+
         $updateData = $data->toArray();
 
         try {
@@ -84,7 +85,7 @@ class PostService
 
             $this->post->update($updateData);
 
-            return responseOk('Пост успешно обновлён');
+            return responseOk('Пост успешно обновлён c id:' . $this->post->id , 200);
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка обновления поста', 500);
         }
@@ -99,7 +100,7 @@ class PostService
                 return response()->json(['No Content' => 'Нет данных для обновления'], 204);
             }
 
-            return responseOk('Пост успешно обновлён');
+            return responseOk('Пост успешно обновлён c id:' . $this->post->id , 200);
         } catch (\Exception $e) {
             return responseFail($e, 'Ошибка обновления поста', 500);
         }

@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
+
 class CreatePostTest extends TestCase
 {
     private int $postId;
@@ -32,50 +33,42 @@ class CreatePostTest extends TestCase
             'category_name' => $category->name,
         ];
 
-        $response = $this->post(route('posts.store'), $this->data);
-
-        $message = ($response->json())['message'];
+        $response =  $this->json('Post', route('posts.store'), ($this->data));
 
         $response->assertCreated();
         $response->assertJsonStructure(['message']);
 
-        preg_match('/id:(\d+)/', $message, $matches);
 
-        if (isset($matches)) {
-            $this->postId = (int) $matches[1];
-        } else {
-            dd('$id не найден');
-        }
+        $message = ($response->json())['message'];
+
+        $this->postId = $this->takePostId($message);
 
         $this->testGetCreatedPost();
     }
 
     private function testGetCreatedPost(): void
     {
-
-        $getResponse = $this->get(route('posts.show', ['post' => $this->postId]));
-
-        $getResponse->assertStatus(200);
-
-        $getResponse->assertJson([
-            'title' => $this->data['title'],
-            'body' => $this->data['content'],
-            'categoryName' => $this->data['category_name'],
+        $this->assertDatabaseHas('posts', [
+                'id' => $this->postId,
+                'title' => $this->data['title'],
+                'body' => $this->data['content'],
+                'status' => $this->data['state'],
+                'category_id' => Category::query()->where('name', $this->data['category_name'])->first()->id,
         ]);
+
     }
 
     public function test_create_product_failed_validation(): void
     {
 
         $this->data = [
-            'title' => fake()->word,
+            'titwle' => fake()->word,
         ];
 
-        $response = $this->post(route('posts.store'), $this->data);
+        $response = $this->json('Post', route('posts.store'), ($this->data));
 
-        //dd($response->status(), $response->headers->all(), $response->getContent());
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['title', 'state', 'category name']);
+        $response->assertJsonValidationErrors(['title', 'state', 'category_name']);
     }
 }

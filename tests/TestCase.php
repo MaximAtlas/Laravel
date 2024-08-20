@@ -24,4 +24,14 @@ abstract class TestCase extends BaseTestCase
     {
         return $this->currentUser->id;
     }
+    protected function takePostId($message): int
+    {
+        preg_match('/id:(\d+)/', $message, $matches);
+
+        if (isset($matches)) {
+            return ((int) $matches[1]);
+        } else {
+            dd('$id не найден');
+        }
+    }
 }
