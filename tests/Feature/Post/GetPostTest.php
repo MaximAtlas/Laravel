@@ -12,7 +12,6 @@ use Tests\TestCase;
 
 class GetPostTest extends TestCase
 {
-    use RefreshDatabase;
 
     private Post $post;
 

@@ -12,8 +12,6 @@ use Tests\TestCase;
 
 class GetPostsTest extends TestCase
 {
-    use RefreshDatabase;
-
     private Post $post;
 
     protected function setUp(): void
